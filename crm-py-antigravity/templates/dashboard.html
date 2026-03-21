@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Overview{% endblock %}
+{% block page_title %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="glass-card stat-card animate-fade-in delay-100">
+        <div class="stat-title">Total Customers</div>
+        <div class="stat-value text-gradient">{{ customers_count }}</div>
+    </div>
+    <div class="glass-card stat-card animate-fade-in delay-200">
+        <div class="stat-title">Total Deals</div>
+        <div class="stat-value">{{ deals_count }}</div>
+    </div>
+    <div class="glass-card stat-card animate-fade-in delay-300">
+        <div class="stat-title">Total Deal Value</div>
+        <div class="stat-value" style="color: var(--success);">${{ "{:,.2f}".format(total_value) }}</div>
+    </div>
+</div>
+
+<div class="glass-card animate-fade-in delay-300">
+    <h2 style="margin-bottom: 1.5rem; font-size: 1.25rem; font-weight: 600;">Welcome to Nyas CRM</h2>
+    <p style="color: var(--text-secondary); max-width: 600px; margin-bottom: 1rem;">
+        This beautifully crafted sample CRM app uses FastAPI and SQLModel connected to a scalable PostgreSQL instance provisioned by Nyas.
+    </p>
+    <div style="display:flex; gap:1rem; margin-top:2rem;">
+        <a href="/customers" class="btn btn-primary">Add New Customer</a>
+        <a href="/deals" class="btn" style="background:rgba(255,255,255,0.1); color:white;">View Deals Pipeline</a>
+    </div>
+</div>
+{% endblock %}

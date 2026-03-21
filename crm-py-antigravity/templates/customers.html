@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Customers{% endblock %}
+{% block page_title %}Customers{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start; height: 100%;">
+    
+    <!-- Customers List -->
+    <div class="glass-card table-container animate-fade-in delay-100">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.5rem;">
+            <h2 style="font-size: 1.125rem; font-weight: 600;">Customer Directory</h2>
+            <div class="column-count">{{ customers | length }} Records</div>
+        </div>
+        {% if customers %}
+        <table style="width: 100%;">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Company</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td style="font-weight: 500;">{{ customer.name }}</td>
+                    <td style="color: var(--text-secondary);">{{ customer.email }}</td>
+                    <td>
+                        {% if customer.company %}
+                        <span style="background: rgba(255,255,255,0.05); padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.85rem; border: 1px solid var(--border-color);">
+                            {{ customer.company }}
+                        </span>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="padding: 3rem; text-align: center; color: var(--text-secondary);">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:1rem; opacity:0.5;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <p>No customers found. Add your first customer!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Add Customer Form -->
+    <div class="glass-card animate-fade-in delay-200" style="position: sticky; top: 0rem;">
+        <h2 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1.5rem;">Add New Customer</h2>
+        <form action="/customers" method="POST">
+            <div class="form-group">
+                <label class="form-label" for="name">Full Name *</label>
+                <input type="text" id="name" name="name" class="form-control" required placeholder="Jane Doe">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="email">Email Address *</label>
+                <input type="email" id="email" name="email" class="form-control" required placeholder="jane@example.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="company">Company</label>
+                <input type="text" id="company" name="company" class="form-control" placeholder="Acme Inc.">
+            </div>
+            <div style="margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Customer</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

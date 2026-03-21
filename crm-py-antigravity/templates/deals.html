@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Deals Kanban{% endblock %}
+{% block page_title %}Deals Pipeline{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:flex-end; margin-bottom: 1.5rem; animation: fadeIn 0.5s ease forwards;">
+    <button class="btn btn-primary" onclick="document.getElementById('addDealModal').style.display='flex'">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        New Deal
+    </button>
+</div>
+
+<!-- Modal for New Deal -->
+<div id="addDealModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.8); z-index:100; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+    <div class="glass-card" style="width: 100%; max-width: 450px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:1.5rem;">
+            <h2 style="font-size: 1.25rem;">Create New Deal</h2>
+            <button onclick="document.getElementById('addDealModal').style.display='none'" style="background:none;border:none;color:white;cursor:pointer;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <form action="/deals" method="POST">
+            <div class="form-group">
+                <label class="form-label">Deal Title</label>
+                <input type="text" name="title" class="form-control" required placeholder="Enterprise License">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Value ($)</label>
+                <input type="number" step="0.01" name="value" class="form-control" required placeholder="5000">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Customer</label>
+                <select name="customer_id" class="form-control" required>
+                    <option value="" disabled selected>Select Customer</option>
+                    {% for customer in customers %}
+                    <option value="{{ customer.id }}">{{ customer.name }} {% if customer.company %}({{ customer.company }}){% endif %}</option>
+                    {% endfor %}
+                </select>
+                {% if not customers %}
+                <p style="color:var(--warning); font-size:0.8rem; margin-top:0.5rem;">Please create a customer first.</p>
+                {% endif %}
+            </div>
+            <div style="margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary" style="width: 100%;" {% if not customers %}disabled{% endif %}>Create Deal</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="kanban-board animate-fade-in delay-100">
+    {% set stages = ["Lead", "Proposal", "Negotiation", "Won", "Lost"] %}
+    
+    {% for stage in stages %}
+    <div class="kanban-column" id="col-{{ stage }}" ondrop="drop(event)" ondragover="allowDrop(event)">
+        <div class="column-header">
+            <span>{{ stage }}</span>
+            <span class="column-count">{{ board[stage] | length }}</span>
+        </div>
+        
+        <div class="sortable-list" data-status="{{ stage }}" style="min-height: 100px;">
+            {% for deal in board[stage] %}
+            <div class="deal-card" draggable="true" ondragstart="drag(event)" id="deal-{{ deal.id }}" data-id="{{ deal.id }}">
+                <div class="deal-title">{{ deal.title }}</div>
+                <div class="deal-value">${{ "{:,.2f}".format(deal.value) }}</div>
+                {% if deal.customer %}
+                <div class="deal-customer">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:2px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    {{ deal.customer.name }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function allowDrop(ev) {
+        ev.preventDefault();
+        ev.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+        ev.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
+    }
+
+    function drag(ev) {
+        ev.dataTransfer.setData("text", ev.currentTarget.id);
+        ev.currentTarget.style.opacity = '0.5';
+    }
+
+    // Reset styles on leave
+    document.querySelectorAll('.kanban-column').forEach(col => {
+        col.addEventListener('dragleave', (ev) => {
+            if (ev.currentTarget === ev.target ||!ev.currentTarget.contains(ev.relatedTarget)) {
+                ev.currentTarget.style.background = 'rgba(30, 41, 59, 0.3)';
+                ev.currentTarget.style.borderColor = 'var(--glass-border)';
+            }
+        });
+    });
+
+    async function drop(ev) {
+        ev.preventDefault();
+
+        // Target column
+        let targetCol = ev.target.closest('.kanban-column');
+        if(!targetCol) return;
+        
+        targetCol.style.background = 'rgba(30, 41, 59, 0.3)';
+        targetCol.style.borderColor = 'var(--glass-border)';
+
+        var data = ev.dataTransfer.getData("text");
+        var draggedEl = document.getElementById(data);
+        if (!draggedEl) return;
+        draggedEl.style.opacity = '1';
+
+        // Find the wrapper inside the column
+        let listWrapper = targetCol.querySelector('.sortable-list');
+        listWrapper.appendChild(draggedEl);
+
+        let newStatus = listWrapper.getAttribute('data-status');
+        let dealId = draggedEl.getAttribute('data-id');
+
+        // Update Backend
+        try {
+            const response = await fetch(`/api/deals/${dealId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({status: newStatus})
+            });
+            if(response.ok) {
+                // optional: update counts
+                location.reload(); // naive reload to sync counts securely
+            }
+        } catch(e) {
+            console.error("Error updating status", e);
+        }
+    }
+    
+    // reset dragged element opacity on dragend (if cancelled)
+    document.addEventListener('dragend', (e) => {
+        if(e.target.classList && e.target.classList.contains('deal-card')) {
+            e.target.style.opacity = '1';
+        }
+    });
+
+</script>
+{% endblock %}
