@@ -1,0 +1,114 @@
+{{define "customers.html"}}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{.Title}} · Nyas CRM</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">N</div>
+          <div>
+            <p class="eyebrow">Powered by Nyas</p>
+            <h1>Nyas CRM</h1>
+          </div>
+        </div>
+        <nav class="nav">
+          <a class="{{if eq .ActivePath "/"}}active{{end}}" href="/">Dashboard</a>
+          <a class="{{if eq .ActivePath "/customers"}}active{{end}}" href="/customers">Customers</a>
+          <a class="{{if eq .ActivePath "/deals"}}active{{end}}" href="/deals">Deals</a>
+        </nav>
+        <div class="sidebar-card">
+          <p class="eyebrow">Today</p>
+          <p class="sidebar-copy">Keep customer and deal data in a single Postgres-backed workflow.</p>
+        </div>
+      </aside>
+
+      <main class="content">
+        {{if .Flash}}
+        <div class="flash">{{.Flash}}</div>
+        {{end}}
+
+        <section class="hero">
+          <div>
+            <p class="eyebrow">Customers</p>
+            <h2>Capture the people and companies moving through your funnel.</h2>
+            <p class="lede">This basic CRM keeps contacts lean on purpose: the app focuses on core account and pipeline workflows first.</p>
+          </div>
+        </section>
+
+        <section class="split-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Add Customer</p>
+                <h3>Create a new account</h3>
+              </div>
+            </div>
+            <form class="form" method="post" action="/customers">
+              <label>
+                <span>Name</span>
+                <input name="name" placeholder="Maya Chen" required />
+              </label>
+              <label>
+                <span>Email</span>
+                <input type="email" name="email" placeholder="maya@northstarlabs.com" required />
+              </label>
+              <label>
+                <span>Company</span>
+                <input name="company" placeholder="Northstar Labs" />
+              </label>
+              <button type="submit">Save Customer</button>
+            </form>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Directory</p>
+                <h3>{{len .Customers}} tracked customers</h3>
+              </div>
+            </div>
+            <div class="table">
+              {{range .Customers}}
+              <div class="table-row">
+                <div>
+                  <strong>{{.Name}}</strong>
+                  <p>{{.Email}}</p>
+                </div>
+                <div>
+                  <span>{{if .Company}}{{.Company}}{{else}}Independent{{end}}</span>
+                  <p>{{.DealCount}} deals</p>
+                </div>
+                <div class="table-actions">
+                  <time data-epoch="{{.CreatedAtUnix}}"></time>
+                  <form method="post" action="/customers/{{.ID}}/delete">
+                    <button class="button-secondary" type="submit">Delete</button>
+                  </form>
+                </div>
+              </div>
+              {{else}}
+              <p class="empty">Add your first customer to get started.</p>
+              {{end}}
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      document.querySelectorAll("[data-epoch]").forEach((element) => {
+        const epochSeconds = Number(element.dataset.epoch);
+        if (!Number.isFinite(epochSeconds)) return;
+        element.textContent = new Date(epochSeconds * 1000).toLocaleString(undefined, {
+          dateStyle: "medium",
+        });
+      });
+    </script>
+  </body>
+</html>
+{{end}}

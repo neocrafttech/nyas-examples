@@ -1,0 +1,2 @@
+- There is no Go-specific Nyas starter or stage-site integration guide in this repo, so the project structure had to be inferred from sibling examples.
+- Project-local Go caches need to live in hidden `tmp/` subdirectories, otherwise `go mod tidy` treats them as part of the module tree.

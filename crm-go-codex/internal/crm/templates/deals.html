@@ -1,0 +1,140 @@
+{{define "deals.html"}}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{.Title}} · Nyas CRM</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">N</div>
+          <div>
+            <p class="eyebrow">Powered by Nyas</p>
+            <h1>Nyas CRM</h1>
+          </div>
+        </div>
+        <nav class="nav">
+          <a class="{{if eq .ActivePath "/"}}active{{end}}" href="/">Dashboard</a>
+          <a class="{{if eq .ActivePath "/customers"}}active{{end}}" href="/customers">Customers</a>
+          <a class="{{if eq .ActivePath "/deals"}}active{{end}}" href="/deals">Deals</a>
+        </nav>
+        <div class="sidebar-card">
+          <p class="eyebrow">Today</p>
+          <p class="sidebar-copy">Keep customer and deal data in a single Postgres-backed workflow.</p>
+        </div>
+      </aside>
+
+      <main class="content">
+        {{if .Flash}}
+        <div class="flash">{{.Flash}}</div>
+        {{end}}
+
+        <section class="hero">
+          <div>
+            <p class="eyebrow">Deals</p>
+            <h2>Track opportunities from first touch to close.</h2>
+            <p class="lede">Move deals through the pipeline with lightweight stage updates instead of a heavy drag-and-drop dependency stack.</p>
+          </div>
+        </section>
+
+        <section class="split-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Add Deal</p>
+                <h3>Create an opportunity</h3>
+              </div>
+            </div>
+            <form class="form" method="post" action="/deals">
+              <label>
+                <span>Title</span>
+                <input name="title" placeholder="Growth Retainer" required />
+              </label>
+              <label>
+                <span>Customer</span>
+                <select name="customer_id" required>
+                  <option value="">Select a customer</option>
+                  {{range .Customers}}
+                  <option value="{{.ID}}">{{.Name}}</option>
+                  {{end}}
+                </select>
+              </label>
+              <label>
+                <span>Value (USD)</span>
+                <input type="number" step="0.01" min="0" name="value" placeholder="42000" required />
+              </label>
+              <label>
+                <span>Status</span>
+                <select name="status" required>
+                  {{range .Statuses}}
+                  <option value="{{.}}">{{.}}</option>
+                  {{end}}
+                </select>
+              </label>
+              <button type="submit">Save Deal</button>
+            </form>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Pipeline Board</p>
+                <h3>{{len .Deals}} total deals</h3>
+              </div>
+            </div>
+            <div class="kanban">
+              {{range $column := .Statuses}}
+              <div class="kanban-column">
+                <div class="kanban-header">
+                  <strong>{{$column}}</strong>
+                  <span>{{len (index $.DealsByStep $column)}}</span>
+                </div>
+                <div class="kanban-stack">
+                  {{range $deal := (index $.DealsByStep $column)}}
+                  <div class="deal-card">
+                    <div>
+                      <strong>{{$deal.Title}}</strong>
+                      <p>{{$deal.CustomerName}}</p>
+                    </div>
+                    <strong>{{currency $deal.ValueCents}}</strong>
+                    <time data-epoch="{{$deal.CreatedAtUnix}}"></time>
+                    <form class="inline-form" method="post" action="/deals/{{$deal.ID}}/status">
+                      <select name="status">
+                        {{range $status := $.Statuses}}
+                        <option value="{{$status}}" {{if eq $status $deal.Status}}selected{{end}}>{{$status}}</option>
+                        {{end}}
+                      </select>
+                      <button type="submit">Move</button>
+                    </form>
+                    <form method="post" action="/deals/{{$deal.ID}}/delete">
+                      <button class="button-secondary" type="submit">Delete</button>
+                    </form>
+                  </div>
+                  {{else}}
+                  <p class="empty">No deals in this stage.</p>
+                  {{end}}
+                </div>
+              </div>
+              {{end}}
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      document.querySelectorAll("[data-epoch]").forEach((element) => {
+        const epochSeconds = Number(element.dataset.epoch);
+        if (!Number.isFinite(epochSeconds)) return;
+        element.textContent = new Date(epochSeconds * 1000).toLocaleString(undefined, {
+          dateStyle: "medium",
+        });
+      });
+    </script>
+  </body>
+</html>
+{{end}}

@@ -1,0 +1,157 @@
+{{define "dashboard.html"}}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{.Title}} · Nyas CRM</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">N</div>
+          <div>
+            <p class="eyebrow">Powered by Nyas</p>
+            <h1>Nyas CRM</h1>
+          </div>
+        </div>
+        <nav class="nav">
+          <a class="{{if eq .ActivePath "/"}}active{{end}}" href="/">Dashboard</a>
+          <a class="{{if eq .ActivePath "/customers"}}active{{end}}" href="/customers">Customers</a>
+          <a class="{{if eq .ActivePath "/deals"}}active{{end}}" href="/deals">Deals</a>
+        </nav>
+        <div class="sidebar-card">
+          <p class="eyebrow">Today</p>
+          <p class="sidebar-copy">Keep customer and deal data in a single Postgres-backed workflow.</p>
+        </div>
+      </aside>
+
+      <main class="content">
+        {{if .Flash}}
+        <div class="flash">{{.Flash}}</div>
+        {{end}}
+
+        <section class="hero">
+          <div>
+            <p class="eyebrow">Overview</p>
+            <h2>Monitor pipeline health and recent CRM movement.</h2>
+            <p class="lede">A compact dashboard for the customer and deal records stored in your Nyas Postgres database.</p>
+          </div>
+        </section>
+
+        <section class="stats-grid">
+          <article class="stat-card">
+            <p class="eyebrow">Customers</p>
+            <h3>{{.Dashboard.Stats.CustomerCount}}</h3>
+            <p>Accounts tracked across the CRM.</p>
+          </article>
+          <article class="stat-card">
+            <p class="eyebrow">Deals</p>
+            <h3>{{.Dashboard.Stats.DealCount}}</h3>
+            <p>Open and closed opportunities.</p>
+          </article>
+          <article class="stat-card">
+            <p class="eyebrow">Pipeline</p>
+            <h3>{{currency .Dashboard.Stats.PipelineCents}}</h3>
+            <p>Total value currently in motion.</p>
+          </article>
+          <article class="stat-card">
+            <p class="eyebrow">Won</p>
+            <h3>{{currency .Dashboard.Stats.WonCents}}</h3>
+            <p>Revenue closed successfully.</p>
+          </article>
+        </section>
+
+        <section class="panel-grid">
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Recent Customers</p>
+                <h3>Newest accounts</h3>
+              </div>
+              <a href="/customers">View all</a>
+            </div>
+            <div class="list">
+              {{range .Dashboard.RecentCustomers}}
+              <div class="list-row">
+                <div class="avatar">{{initials .Name}}</div>
+                <div>
+                  <strong>{{.Name}}</strong>
+                  <p>{{.Email}}</p>
+                </div>
+                <div class="meta">
+                  <span>{{if .Company}}{{.Company}}{{else}}Independent{{end}}</span>
+                  <time data-epoch="{{.CreatedAtUnix}}"></time>
+                </div>
+              </div>
+              {{else}}
+              <p class="empty">No customers yet.</p>
+              {{end}}
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Recent Deals</p>
+                <h3>Latest opportunities</h3>
+              </div>
+              <a href="/deals">Open pipeline</a>
+            </div>
+            <div class="list">
+              {{range .Dashboard.RecentDeals}}
+              <div class="list-row">
+                <div>
+                  <strong>{{.Title}}</strong>
+                  <p>{{.CustomerName}}</p>
+                </div>
+                <div class="meta">
+                  <span class="pill">{{.Status}}</span>
+                  <strong>{{currency .ValueCents}}</strong>
+                </div>
+              </div>
+              {{else}}
+              <p class="empty">No deals yet.</p>
+              {{end}}
+            </div>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div>
+                <p class="eyebrow">Activity</p>
+                <h3>What changed recently</h3>
+              </div>
+            </div>
+            <div class="activity-list">
+              {{range .Dashboard.RecentActivities}}
+              <div class="activity-item">
+                <strong>{{.Label}}</strong>
+                <p>{{.Description}}</p>
+                <time data-epoch="{{.CreatedAtUnix}}" data-style="datetime"></time>
+              </div>
+              {{else}}
+              <p class="empty">Nothing to show yet.</p>
+              {{end}}
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      document.querySelectorAll("[data-epoch]").forEach((element) => {
+        const epochSeconds = Number(element.dataset.epoch);
+        if (!Number.isFinite(epochSeconds)) return;
+        const date = new Date(epochSeconds * 1000);
+        element.textContent = date.toLocaleString(undefined, {
+          dateStyle: "medium",
+          timeStyle: element.dataset.style === "datetime" ? "short" : undefined,
+        });
+      });
+    </script>
+  </body>
+</html>
+{{end}}
