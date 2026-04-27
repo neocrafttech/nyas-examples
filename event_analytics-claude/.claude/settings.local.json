@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rtk ls *)",
+      "WebSearch",
+      "WebFetch(domain:nyas.io)",
+      "WebFetch(domain:app.nyas.io)",
+      "Bash(rtk read *)",
+      "Bash(nyas --version)",
+      "Bash(rtk curl *)",
+      "Bash(sh)",
+      "Bash(~/.local/bin/nyas *)",
+      "Bash(rtk psql *)"
+    ]
+  }
+}
